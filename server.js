@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const cors = require('cors');
+const path = require('path');
 
 const authRoutes = require('./routes/authRoutes');
 const taskRoutes = require('./routes/taskRoutes');
@@ -14,6 +15,9 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Serve static files from the 'public' folder
+app.use(express.static(path.join(__dirname, 'public')));
+
 // Database Connection
 mongoose.connect(process.env.MONGO_URI, {
     useNewUrlParser: true,
@@ -23,12 +27,13 @@ mongoose.connect(process.env.MONGO_URI, {
     .catch((err) => console.error('MongoDB connection error:', err));
 
 // Routes
-app.get('/', (req, res) => {
-    res.send('Welcome to TaskMaster API');
-});
-
 app.use('/api/auth', authRoutes); // Authentication routes
 app.use('/api/tasks', taskRoutes); // Task routes
+
+// Serve index.html as the root
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 
 // Server Initialization
 const PORT = process.env.PORT || 5000;
