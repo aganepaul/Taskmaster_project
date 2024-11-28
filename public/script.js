@@ -1,4 +1,5 @@
-const API_URL = "/api"; // Backend API URL
+const API_URL = "/api";
+ // Backend API URL
 
 let authToken = ""; // Store the JWT token here
 
@@ -23,20 +24,17 @@ async function loginUser(event) {
             body: JSON.stringify({ email, password }),
         });
 
-        if (!response.ok) {
-            const errorData = await response.json();
-            console.error("Login error:", errorData);
-            document.getElementById("authError").textContent = errorData.message || "Login failed";
-            return;
-        }
-
         const data = await response.json();
-        authToken = data.token;
-        localStorage.setItem("authToken", authToken);
-        showTaskSection();
+
+        if (response.ok) {
+            authToken = data.token;
+            localStorage.setItem("authToken", authToken);
+            showTaskSection();
+        } else {
+            document.getElementById("authError").textContent = data.message;
+        }
     } catch (error) {
         console.error("Error:", error);
-        document.getElementById("authError").textContent = "Something went wrong!";
     }
 }
 
@@ -88,6 +86,7 @@ async function fetchTasks(filters = {}) {
     try {
         let url = `${API_URL}/tasks`;
 
+        // Add query parameters for filters
         const queryParams = new URLSearchParams(filters).toString();
         if (queryParams) {
             url += `?${queryParams}`;
@@ -100,15 +99,9 @@ async function fetchTasks(filters = {}) {
             },
         });
 
-        if (!response.ok) {
-            const errorData = await response.json();
-            console.error("Fetch tasks error:", errorData);
-            return;
-        }
-
         const tasks = await response.json();
         const taskListContainer = document.getElementById("tasksList");
-        taskListContainer.innerHTML = "";
+        taskListContainer.innerHTML = ""; // Clear previous tasks
 
         tasks.forEach((task) => {
             const taskItem = document.createElement("div");
@@ -125,6 +118,69 @@ async function fetchTasks(filters = {}) {
     } catch (error) {
         console.error("Error fetching tasks:", error);
     }
+}
+
+function showTaskForm() {
+    document.getElementById("taskForm").style.display = "block";
+}
+
+async function saveTask() {
+    const title = document.getElementById("taskTitle").value;
+    const description = document.getElementById("taskDescription").value;
+    const priority = document.getElementById("taskPriority").value;
+    const deadline = document.getElementById("taskDeadline").value;
+
+    try {
+        const response = await fetch(`${API_URL}/tasks`, {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${authToken}`,
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ title, description, priority, deadline }),
+        });
+
+        if (response.ok) {
+            fetchTasks();
+            document.getElementById("taskForm").reset();
+            document.getElementById("taskForm").style.display = "none";
+        }
+    } catch (error) {
+        console.error("Error saving task:", error);
+    }
+}
+
+async function deleteTask(taskId) {
+    try {
+        const response = await fetch(`${API_URL}/tasks/${taskId}`, {
+            method: "DELETE",
+            headers: {
+                "Authorization": `Bearer ${authToken}`,
+            },
+        });
+
+        if (response.ok) {
+            fetchTasks(); // Refresh the task list after deletion
+        } else {
+            const data = await response.json();
+            console.error("Error deleting task:", data.message);
+        }
+    } catch (error) {
+        console.error("Error deleting task:", error);
+    }
+}
+
+async function applyFilters() {
+    const priority = document.getElementById("filterPriority").value;
+    const dueDate = document.getElementById("filterDueDate").value;
+    const search = document.getElementById("searchKeyword").value;
+
+    const filters = {};
+    if (priority) filters.priority = priority;
+    if (dueDate) filters.deadline = dueDate;
+    if (search) filters.search = search;
+
+    fetchTasks(filters);
 }
 
 function logoutUser() {
