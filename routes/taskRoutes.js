@@ -25,38 +25,6 @@ router.get('/', authMiddleware, async (req, res) => {
 });
 
 
-// router.get("/", authMiddleware, async (req, res) => {
-//     const { priority, dueDate, search } = req.query;
-//     const filter = { userId: req.user.id };
-
-//     // Filter by priority if provided
-//     if (priority) {
-//         filter.priority = priority;
-//     }
-
-//     // Filter by due date if provided
-//     if (dueDate) {
-//         filter.deadline = { $lte: new Date(dueDate) };
-//     }
-
-//     // Search by title or description if provided
-//     if (search) {
-//         filter.$or = [
-//             { title: { $regex: search, $options: "i" } }, // Case-insensitive
-//             { description: { $regex: search, $options: "i" } }
-//         ];
-//     }
-
-//     try {
-//         const tasks = await Task.find(filter).sort({ deadline: 1 }); // Sort by closest due date
-//         res.json(tasks);
-//     } catch (error) {
-//         console.error("Error fetching tasks:", error);
-//         res.status(500).json({ message: "Server error" });
-//     }
-// });
-
-
 // Update a task (protected)
 router.put('/:id', authMiddleware, async (req, res) => {
     const { title, description, priority, deadline } = req.body;
